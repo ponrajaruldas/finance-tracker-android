@@ -39,7 +39,16 @@ jobs:
         cd android
         ./gradlew assembleDebug
 
-    - name: Upload APK
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: latest
+        files: android/app/build/outputs/apk/debug/app-debug.apk
+        prerelease: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: finance-tracker-apk
