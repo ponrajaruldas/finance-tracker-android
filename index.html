@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Tracker - Premium Personal Finance</title>
+    <meta name="description"
+        content="Track your income and expenses with ease. Accessible and secure personal finance management.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar" aria-label="Main Navigation">
+            <div class="brand">
+                <h1>FinTrack</h1>
+            </div>
+            <ul role="list">
+                <li>
+                    <button id="nav-dashboard" class="nav-item active" aria-current="page">
+                        <span class="icon" aria-hidden="true">📊</span>
+                        <span>Dashboard</span>
+                    </button>
+                </li>
+                <li>
+                    <button id="nav-transactions" class="nav-item">
+                        <span class="icon" aria-hidden="true">💳</span>
+                        <span>Transactions</span>
+                    </button>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main id="main-content" tabindex="-1" role="main">
+            <header class="top-bar">
+                <h2 id="page-title">Dashboard</h2>
+                <button class="btn-primary" id="btn-add-transaction" aria-label="Add new transaction">
+                    + Add Transaction
+                </button>
+            </header>
+
+            <!-- Dashboard View -->
+            <section id="view-dashboard" class="view active" aria-labelledby="page-title">
+                <div class="summary-cards">
+                    <article class="card balance">
+                        <h3>Total Balance</h3>
+                        <p class="amount" id="total-balance">₹0.00</p>
+                    </article>
+                    <article class="card income">
+                        <h3>Income</h3>
+                        <p class="amount positive" id="total-income">+₹0.00</p>
+                    </article>
+                    <article class="card expense">
+                        <h3>Expenses</h3>
+                        <p class="amount negative" id="total-expense">-₹0.00</p>
+                    </article>
+                </div>
+
+                <div class="recent-activity">
+                    <h3>Recent Activity</h3>
+                    <div class="table-container" role="region" aria-label="Recent Transactions Table" tabindex="0">
+                        <table class="transaction-table" aria-label="Summary of Recent Transactions">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Date</th>
+                                    <th scope="col">Category</th>
+                                    <th scope="col">Description</th>
+                                    <th scope="col" class="text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-transactions-body">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                        <p id="no-transactions-msg" class="empty-state hidden">No recent transactions.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Transactions View -->
+            <section id="view-transactions" class="view hidden" aria-labelledby="page-title">
+                <!-- Will be populated similar to dashboard but with full list -->
+                <div class="header-controls">
+                    <div class="filter-group">
+                        <input type="text" id="filter-search" placeholder="Search description or category..."
+                            aria-label="Search transactions">
+                        <select id="filter-type" aria-label="Filter by type">
+                            <option value="all">All Types</option>
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                        </select>
+                    </div>
+                    <button class="btn-secondary" id="btn-export-csv" aria-label="Export to CSV">Export to CSV</button>
+                </div>
+                <div class="table-container" role="region" aria-label="All Transactions Table" tabindex="0">
+                    <table class="transaction-table" aria-label="Full List of Transactions">
+                        <thead>
+                            <tr>
+                                <th scope="col">Date</th>
+                                <th scope="col">Category</th>
+                                <th scope="col">Description</th>
+                                <th scope="col" class="text-right">Amount</th>
+                                <th scope="col" class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="all-transactions-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal for Adding Transaction -->
+    <div id="transaction-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2 id="modal-title">Add Transaction</h2>
+                <button class="btn-close" id="btn-close-modal" aria-label="Close modal">&times;</button>
+            </header>
+            <form id="transaction-form">
+                <fieldset class="form-group" style="border: none; padding: 0; margin-bottom: 1.25rem;">
+                    <legend style="margin-bottom: 0.5rem; font-weight: 500; font-size: 0.95rem;">Type</legend>
+                    <div class="toggle-group" role="radiogroup" aria-labelledby="modal-title">
+                        <input type="radio" name="type" id="type-expense" value="expense" checked>
+                        <label for="type-expense" class="toggle-label type-expense">Expense</label>
+
+                        <input type="radio" name="type" id="type-income" value="income">
+                        <label for="type-income" class="toggle-label type-income">Income</label>
+                    </div>
+                </fieldset>
+
+                <div class="form-group">
+                    <label for="t-amount">Amount</label>
+                    <input type="number" id="t-amount" name="amount" step="0.01" min="0" placeholder="0.00" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="t-date">Date</label>
+                    <input type="date" id="t-date" name="date" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="t-category">Category</label>
+                    <select id="t-category" name="category" required>
+                        <option value="" disabled selected>Select Category</option>
+                        <option value="Food">Food & Dining</option>
+                        <option value="Transport">Transportation</option>
+                        <option value="Utilities">Utilities</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Salary">Salary</option>
+                        <option value="Freelance">Freelance</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="t-desc">Description</label>
+                    <input type="text" id="t-desc" name="description" placeholder="e.g., Grocery shopping">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="btn-cancel-modal">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Transaction</button>
+                </div>
+            </form>
+        </div>
+        <div class="modal-overlay" tabindex="-1"></div>
+    </div>
+
+    <!-- Live Region for Announcements -->
+    <div id="a11y-announcer" class="sr-only" aria-live="polite"></div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+
+</html>

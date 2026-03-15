@@ -1,0 +1,9 @@
+{
+  "appId": "com.finance.tracker",
+  "appName": "Finance Tracker",
+  "webDir": ".",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}
