@@ -4,6 +4,7 @@
   "description": "Premium Finance Tracker App",
   "main": "index.html",
   "scripts": {
+    "build": "echo 'Static app, no build needed'",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

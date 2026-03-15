@@ -26,6 +26,9 @@ jobs:
     - name: Install dependencies
       run: npm install
 
+    - name: Run Build
+      run: npm run build
+
     - name: Install Capacitor Android
       run: |
         npx cap add android
