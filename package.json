@@ -1,6 +1,6 @@
 {
   "name": "finance-tracker",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Premium Finance Tracker App",
   "main": "index.html",
   "scripts": {

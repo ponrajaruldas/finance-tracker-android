@@ -35,8 +35,8 @@ jobs:
 
     - name: Bump Version (for Update)
       run: |
-        sed -i 's/versionCode 1/versionCode 2/' android/app/build.gradle
-        sed -i 's/versionName "1.0"/versionName "1.1.0"/' android/app/build.gradle
+        sed -i 's/versionCode 1/versionCode 3/' android/app/build.gradle
+        sed -i 's/versionName "1.0"/versionName "1.1.1"/' android/app/build.gradle
 
     - name: Build APK
       run: |
@@ -47,12 +47,13 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         tag_name: latest
-        name: "Finance Tracker v1.1.0 (Latest)"
+        name: "Finance Tracker v1.1.1 (A11y Update)"
         body: |
-          Update v1.1.0:
-          - Mobile-first layout with bottom navigation.
-          - Settings page with Dark/Light theme support.
-          - Performance improvements.
+          Update v1.1.1:
+          - Full TalkBack accessibility support.
+          - Improved focus management and screen reader announcements.
+          - Enhanced dynamic element labeling.
+          - Bumped version for update compatibility.
         files: android/app/build/outputs/apk/debug/app-debug.apk
         prerelease: true
         make_latest: true

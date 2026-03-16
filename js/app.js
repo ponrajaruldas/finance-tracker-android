@@ -1,60 +1,82 @@
 /**
  * Main Application Scripts
- * Handles initialization, navigation, and core state management.
+ * Handles mobile-first navigation, themes, and transaction management.
  */
 
-// We will implement simpler modular logic for clarity
 const App = {
     init() {
         console.log('App Initializing...');
+        this.setupTheme();
         this.setupNavigation();
         this.setupModal();
         this.setupFiltersAndExport();
         this.setupKeyboardShortcuts();
         this.loadDashboard();
+        
+        // Update version display
+        const versionEl = document.getElementById('app-version');
+        if (versionEl) versionEl.textContent = 'v1.1.1 (Mobile & A11y Optimized)';
     },
 
     state: {
-        transactions: [],
         view: 'dashboard'
+    },
+
+    setupTheme() {
+        const themeToggle = document.getElementById('theme-toggle');
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        if (themeToggle) {
+            themeToggle.checked = savedTheme === 'dark';
+            themeToggle.addEventListener('change', (e) => {
+                const newTheme = e.target.checked ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                this.announce(`Theme set to ${newTheme} mode.`);
+            });
+        }
     },
 
     setupNavigation() {
         const navItems = document.querySelectorAll('.nav-item');
-        const views = document.querySelectorAll('.view');
         const pageTitle = document.getElementById('page-title');
 
         navItems.forEach(item => {
             item.addEventListener('click', (e) => {
-                // Remove active class from all
+                const button = e.target.closest('button');
+                const targetId = button.id.replace('nav-', '');
+                
+                // Update active state in nav
                 navItems.forEach(nav => {
                     nav.classList.remove('active');
                     nav.setAttribute('aria-current', 'false');
                 });
-
-                // Add active to clicked
-                // Handle click on span vs button
-                const button = e.target.closest('button');
                 button.classList.add('active');
                 button.setAttribute('aria-current', 'page');
 
                 // Switch View
-                const targetId = button.id.replace('nav-', '');
                 this.switchView(targetId);
 
                 // Update Title
-                pageTitle.textContent = targetId.charAt(0).toUpperCase() + targetId.slice(1);
+                let title = targetId.charAt(0).toUpperCase() + targetId.slice(1);
+                if (targetId === 'dashboard') title = 'Summary';
+                if (targetId === 'transactions') title = 'History';
+                pageTitle.textContent = title;
 
-                // Focus the title for NVDA to announce page change
-                pageTitle.setAttribute('tabindex', '-1');
-                pageTitle.focus();
+                // Move focus to view header for screen readers
+                setTimeout(() => {
+                    pageTitle.setAttribute('tabindex', '-1');
+                    pageTitle.focus();
+                }, 100);
             });
         });
     },
 
     switchView(viewName) {
         document.querySelectorAll('.view').forEach(el => el.classList.add('hidden'));
-        document.getElementById(`view-${viewName}`).classList.remove('hidden');
+        const targetView = document.getElementById(`view-${viewName}`);
+        if (targetView) targetView.classList.remove('hidden');
 
         if (viewName === 'dashboard') {
             this.loadDashboard();
@@ -70,8 +92,6 @@ const App = {
 
         const updateFilter = () => {
             this.loadTransactions();
-            const typeText = typeSelect.options[typeSelect.selectedIndex].text;
-            this.announce(`Filtered to ${typeText} transactions. ${searchInput.value ? 'Search active.' : ''}`);
         };
         if (searchInput) searchInput.addEventListener('input', updateFilter);
         if (typeSelect) typeSelect.addEventListener('change', updateFilter);
@@ -83,11 +103,10 @@ const App = {
 
     setupKeyboardShortcuts() {
         document.addEventListener('keydown', (e) => {
-            // Escape closes modal
             if (e.key === 'Escape') {
                 const modal = document.getElementById('transaction-modal');
-                if (!modal.classList.contains('hidden')) {
-                    document.getElementById('btn-close-modal').click();
+                if (modal.classList.contains('active')) {
+                    this.closeModal();
                 }
             }
         });
@@ -95,10 +114,7 @@ const App = {
 
     exportToCSV() {
         const transactions = this.getTransactions();
-        if (transactions.length === 0) {
-            this.announce("No transactions to export.");
-            return;
-        }
+        if (transactions.length === 0) return;
 
         const headers = ['Date', 'Type', 'Category', 'Amount', 'Description'];
         const csvRows = [headers.join(',')];
@@ -108,17 +124,13 @@ const App = {
             csvRows.push([t.date, t.type, t.category, t.amount, desc].join(','));
         });
 
-        const csvString = csvRows.join('\n');
-        const blob = new Blob([csvString], { type: 'text/csv' });
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
-
         const a = document.createElement('a');
         a.href = url;
-        a.download = `transactions_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `finance_tracker_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
-
-        URL.revokeObjectURL(url);
-        this.announce("Transactions exported to CSV.");
+        this.announce("File exported.");
     },
 
     setupModal() {
@@ -128,67 +140,56 @@ const App = {
         const btnCancel = document.getElementById('btn-cancel-modal');
         const form = document.getElementById('transaction-form');
 
-        // Focus trap functionality
-        const focusableElements = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+        const openModal = () => {
+            this.lastFocusedElement = document.activeElement;
+            modal.classList.add('active');
+            setTimeout(() => {
+                document.getElementById('t-amount').focus();
+            }, 300);
+            this.announce("Add transaction modal opened.");
+        };
 
-        const handleFocusTrap = (e) => {
-            if (e.key !== 'Tab' || modal.classList.contains('hidden')) return;
-
-            const focusableContent = modal.querySelectorAll(focusableElements);
-            const firstFocusable = focusableContent[0];
-            const lastFocusable = focusableContent[focusableContent.length - 1];
-
-            if (e.shiftKey) { // Shift + Tab
-                if (document.activeElement === firstFocusable) {
-                    lastFocusable.focus();
-                    e.preventDefault();
-                }
-            } else { // Tab
-                if (document.activeElement === lastFocusable) {
-                    firstFocusable.focus();
-                    e.preventDefault();
-                }
+        this.closeModal = () => {
+            modal.classList.remove('active');
+            form.reset();
+            if (this.lastFocusedElement) {
+                this.lastFocusedElement.focus();
             }
         };
 
-        const openModal = () => {
-            modal.classList.remove('hidden');
-            document.addEventListener('keydown', handleFocusTrap);
-
-            // Hide background from screen readers so NVDA stays inside modal
-            const mainContent = document.getElementById('main-content');
-            const sidebar = document.querySelector('.sidebar');
-            if (mainContent) mainContent.setAttribute('aria-hidden', 'true');
-            if (sidebar) sidebar.setAttribute('aria-hidden', 'true');
-
-            // Auto-focus amount field for faster entry
-            setTimeout(() => {
-                document.getElementById('t-amount').focus();
-            }, 50);
-        };
-
-        const closeModal = () => {
-            modal.classList.add('hidden');
-            document.removeEventListener('keydown', handleFocusTrap);
-
-            // Restore background visibility to screen readers
-            const mainContent = document.getElementById('main-content');
-            const sidebar = document.querySelector('.sidebar');
-            if (mainContent) mainContent.removeAttribute('aria-hidden');
-            if (sidebar) sidebar.removeAttribute('aria-hidden');
-
-            btnAdd.focus(); // Return focus
-            form.reset();
-        };
-
         btnAdd.addEventListener('click', openModal);
-        btnClose.addEventListener('click', closeModal);
-        btnCancel.addEventListener('click', closeModal);
+        btnClose.addEventListener('click', this.closeModal);
+        btnCancel.addEventListener('click', this.closeModal);
+
+        // Close modal on overlay click
+        const overlay = modal.querySelector('.modal-overlay');
+        overlay.addEventListener('click', this.closeModal);
 
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             this.handleTransactionSubmit(new FormData(form));
-            closeModal();
+            this.closeModal();
+        });
+
+        // Focus Trap
+        modal.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                const focusableElements = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                const firstElement = focusableElements[0];
+                const lastElement = focusableElements[focusableElements.length - 1];
+
+                if (e.shiftKey) {
+                    if (document.activeElement === firstElement) {
+                        e.preventDefault();
+                        lastElement.focus();
+                    }
+                } else {
+                    if (document.activeElement === lastElement) {
+                        e.preventDefault();
+                        firstElement.focus();
+                    }
+                }
+            }
         });
     },
 
@@ -202,21 +203,13 @@ const App = {
             description: formData.get('description')
         };
 
-        this.saveTransaction(transaction);
-        this.announce(`Transaction of $${transaction.amount} added.`);
-
-        // Refresh current view
-        if (!document.getElementById('view-dashboard').classList.contains('hidden')) {
-            this.loadDashboard();
-        } else {
-            this.loadTransactions(); // If on list view
-        }
-    },
-
-    saveTransaction(transaction) {
-        const current = JSON.parse(localStorage.getItem('transactions') || '[]');
-        current.unshift(transaction); // Add to top
+        const current = this.getTransactions();
+        current.unshift(transaction);
         localStorage.setItem('transactions', JSON.stringify(current));
+
+        this.loadDashboard();
+        this.loadTransactions();
+        this.announce(`Added ₹${transaction.amount}.`);
     },
 
     getTransactions() {
@@ -225,27 +218,19 @@ const App = {
 
     loadDashboard() {
         const transactions = this.getTransactions();
-
-        // Calculate Totals
-        let income = 0;
-        let expense = 0;
+        let inc = 0, exp = 0;
 
         transactions.forEach(t => {
-            if (t.type === 'income') income += t.amount;
-            else expense += t.amount;
+            if (t.type === 'income') inc += t.amount;
+            else exp += t.amount;
         });
 
-        const total = income - expense;
+        document.getElementById('total-balance').textContent = this.formatMoney(inc - exp);
+        document.getElementById('total-income').textContent = '+' + this.formatMoney(inc);
+        document.getElementById('total-expense').textContent = '-' + this.formatMoney(exp);
 
-        // Update DOM
-        document.getElementById('total-balance').textContent = this.formatMoney(total);
-        document.getElementById('total-income').textContent = '+' + this.formatMoney(income);
-        document.getElementById('total-expense').textContent = '-' + this.formatMoney(expense);
-
-        // Recent Activity (Top 5)
         const tbody = document.getElementById('recent-transactions-body');
         tbody.innerHTML = '';
-
         const recent = transactions.slice(0, 5);
 
         if (recent.length === 0) {
@@ -254,12 +239,13 @@ const App = {
             document.getElementById('no-transactions-msg').classList.add('hidden');
             recent.forEach(t => {
                 const row = document.createElement('tr');
+                const formattedAmt = (t.type === 'income' ? '+' : '-') + this.formatMoney(t.amount);
+                row.setAttribute('aria-label', `${t.type} of ${formattedAmt} in ${t.category} on ${this.formatDate(t.date)}`);
                 row.innerHTML = `
                     <td>${this.formatDate(t.date)}</td>
-                    <td><span class="badge ${t.type}">${t.category}</span></td>
-                    <td>${t.description}</td>
+                    <td>${t.category}</td>
                     <td class="text-right ${t.type === 'income' ? 'positive' : 'negative'}">
-                        ${t.type === 'income' ? '+' : '-'}${this.formatMoney(t.amount)}
+                        ${formattedAmt}
                     </td>
                 `;
                 tbody.appendChild(row);
@@ -268,85 +254,76 @@ const App = {
     },
 
     loadTransactions() {
-        // Similar to dashboard but all transactions
         let transactions = this.getTransactions();
+        const search = document.getElementById('filter-search').value.toLowerCase();
+        const type = document.getElementById('filter-type').value;
 
-        // Apply Filters
-        const searchInput = document.getElementById('filter-search');
-        const typeSelect = document.getElementById('filter-type');
-
-        if (searchInput && typeSelect) {
-            const searchTerm = searchInput.value.toLowerCase();
-            const filterType = typeSelect.value;
-
-            transactions = transactions.filter(t => {
-                const matchesSearch = (t.description || '').toLowerCase().includes(searchTerm) ||
-                    (t.category || '').toLowerCase().includes(searchTerm);
-                const matchesType = filterType === 'all' || t.type === filterType;
-                return matchesSearch && matchesType;
-            });
-        }
+        transactions = transactions.filter(t => {
+            const matchesSearch = (t.description || '').toLowerCase().includes(search) || 
+                                (t.category || '').toLowerCase().includes(search);
+            const matchesType = type === 'all' || t.type === type;
+            return matchesSearch && matchesType;
+        });
 
         const tbody = document.getElementById('all-transactions-body');
         tbody.innerHTML = '';
 
         if (transactions.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center empty-state" style="padding: 2rem; color: var(--text-muted);">No matching transactions found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center" style="padding: 2rem; color: var(--text-muted);">Empty</td></tr>';
             return;
         }
 
         transactions.forEach(t => {
             const row = document.createElement('tr');
+            const formattedAmt = (t.type === 'income' ? '+' : '-') + this.formatMoney(t.amount);
+            row.setAttribute('aria-label', `${t.type} of ${formattedAmt} in ${t.category} on ${this.formatDate(t.date)}`);
             row.innerHTML = `
                 <td>${this.formatDate(t.date)}</td>
                 <td>${t.category}</td>
-                <td>${t.description}</td>
                 <td class="text-right ${t.type === 'income' ? 'positive' : 'negative'}">
-                    ${t.type === 'income' ? '+' : '-'}${this.formatMoney(t.amount)}
+                    ${formattedAmt}
                 </td>
                 <td class="text-center">
-                    <button class="btn-icon delete-btn" aria-label="Delete transaction" data-id="${t.id}">🗑️</button>
+                    <button class="delete-btn" 
+                        style="background:none; border:none; color:var(--danger); cursor:pointer; padding: 4px;" 
+                        data-id="${t.id}"
+                        aria-label="Delete ${t.type} transaction of ${formattedAmt}">✕</button>
                 </td>
             `;
             tbody.appendChild(row);
         });
 
-        // Add Delete Listeners
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const id = e.target.closest('button').dataset.id;
-                this.deleteTransaction(id);
+                const id = e.currentTarget.dataset.id;
+                const label = e.currentTarget.getAttribute('aria-label');
+                if (confirm(`Are you sure you want to ${label.toLowerCase()}?`)) {
+                    const filtered = this.getTransactions().filter(t => t.id !== id);
+                    localStorage.setItem('transactions', JSON.stringify(filtered));
+                    this.loadTransactions();
+                    this.loadDashboard();
+                    this.announce("Transaction deleted successfully.");
+                }
             });
         });
     },
 
-    deleteTransaction(id) {
-        if (confirm('Are you sure you want to delete this transaction?')) {
-            const current = this.getTransactions().filter(t => t.id !== id);
-            localStorage.setItem('transactions', JSON.stringify(current));
-            this.loadTransactions();
-            this.announce("Transaction deleted.");
+    formatMoney(val) {
+        return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(val);
+    },
+
+    formatDate(d) {
+        if (!d) return '-';
+        return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    },
+
+    announce(msg) {
+        const el = document.getElementById('a11y-announcer');
+        if (el) {
+            el.textContent = msg;
+            setTimeout(() => el.textContent = '', 3000);
         }
-    },
-
-    formatMoney(amount) {
-        return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
-    },
-
-    formatDate(dateStr) {
-        if (!dateStr) return 'N/A';
-        return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    },
-
-    announce(message) {
-        const announcer = document.getElementById('a11y-announcer');
-        announcer.textContent = message;
-        // clear after a moment so same message can be announced again if needed
-        setTimeout(() => announcer.textContent = '', 3000);
     }
 };
 
-// Start App
-document.addEventListener('DOMContentLoaded', () => {
-    App.init();
-});
+document.addEventListener('DOMContentLoaded', () => App.init());
