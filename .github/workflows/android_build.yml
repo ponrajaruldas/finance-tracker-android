@@ -28,9 +28,6 @@ jobs:
     - name: Install dependencies
       run: npm install
 
-    - name: Run Build
-      run: npm run build
-
     - name: Install Capacitor Android
       run: |
         npx cap add android
@@ -50,8 +47,15 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         tag_name: latest
+        name: "Finance Tracker v1.1.0 (Latest)"
+        body: |
+          Update v1.1.0:
+          - Mobile-first layout with bottom navigation.
+          - Settings page with Dark/Light theme support.
+          - Performance improvements.
         files: android/app/build/outputs/apk/debug/app-debug.apk
         prerelease: true
+        make_latest: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
