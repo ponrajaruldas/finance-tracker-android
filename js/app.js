@@ -15,7 +15,7 @@ const App = {
         
         // Update version display
         const versionEl = document.getElementById('app-version');
-        if (versionEl) versionEl.textContent = 'v1.1.1 (Mobile & A11y Optimized)';
+        if (versionEl) versionEl.textContent = 'v1.1.2 (Mobile & A11y Optimized)';
     },
 
     state: {
@@ -168,7 +168,8 @@ const App = {
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             this.handleTransactionSubmit(new FormData(form));
-            this.closeModal();
+            // Slight delay to allow announcement to register before focus shift
+            setTimeout(() => this.closeModal(), 500);
         });
 
         // Focus Trap
@@ -209,7 +210,9 @@ const App = {
 
         this.loadDashboard();
         this.loadTransactions();
-        this.announce(`Added ₹${transaction.amount}.`);
+        
+        const successMsg = `${transaction.type === 'income' ? 'Income' : 'Expense'} of ${this.formatMoney(transaction.amount)} in ${transaction.category} added successfully.`;
+        this.announce(successMsg);
     },
 
     getTransactions() {
