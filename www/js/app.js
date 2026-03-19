@@ -15,7 +15,7 @@ const App = {
         
         // Update version display
         const versionEl = document.getElementById('app-version');
-        if (versionEl) versionEl.textContent = 'v1.1.0';
+        if (versionEl) versionEl.textContent = 'v1.1.13 (TalkBack & A11y Optimized)';
     },
 
     state: {
@@ -63,6 +63,12 @@ const App = {
                 if (targetId === 'dashboard') title = 'Summary';
                 if (targetId === 'transactions') title = 'History';
                 pageTitle.textContent = title;
+
+                // Move focus to view header for screen readers
+                setTimeout(() => {
+                    pageTitle.setAttribute('tabindex', '-1');
+                    pageTitle.focus();
+                }, 100);
             });
         });
     },
@@ -135,23 +141,74 @@ const App = {
         const form = document.getElementById('transaction-form');
 
         const openModal = () => {
+            this.lastFocusedElement = document.activeElement;
             modal.classList.add('active');
-            document.getElementById('t-amount').focus();
+            
+            // Accessibility: Hide background from screen readers
+            const app = document.querySelector('.app-container');
+            if (app) app.setAttribute('aria-hidden', 'true');
+            modal.setAttribute('aria-hidden', 'false');
+
+            setTimeout(() => {
+                const titleNode = document.getElementById('modal-title');
+                if (titleNode) {
+                    titleNode.setAttribute('tabindex', '-1');
+                    titleNode.focus();
+                } else {
+                    document.getElementById('t-amount').focus();
+                }
+            }, 300);
+            this.announce("Add transaction modal opened.");
         };
 
         this.closeModal = () => {
             modal.classList.remove('active');
+            
+            // Accessibility: Restore background
+            const app = document.querySelector('.app-container');
+            if (app) app.removeAttribute('aria-hidden');
+            modal.setAttribute('aria-hidden', 'true');
+
             form.reset();
+            if (this.lastFocusedElement) {
+                this.lastFocusedElement.focus();
+            }
         };
 
         btnAdd.addEventListener('click', openModal);
         btnClose.addEventListener('click', this.closeModal);
         btnCancel.addEventListener('click', this.closeModal);
 
+        // Close modal on overlay click
+        const overlay = modal.querySelector('.modal-overlay');
+        if (overlay) overlay.addEventListener('click', this.closeModal);
+
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             this.handleTransactionSubmit(new FormData(form));
-            this.closeModal();
+            // Slight delay to allow announcement to register before focus shift
+            setTimeout(() => this.closeModal(), 1000);
+        });
+
+        // Focus Trap
+        modal.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                const focusableElements = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                const firstElement = focusableElements[0];
+                const lastElement = focusableElements[focusableElements.length - 1];
+
+                if (e.shiftKey) {
+                    if (document.activeElement === firstElement) {
+                        e.preventDefault();
+                        lastElement.focus();
+                    }
+                } else {
+                    if (document.activeElement === lastElement) {
+                        e.preventDefault();
+                        firstElement.focus();
+                    }
+                }
+            }
         });
     },
 
@@ -171,7 +228,9 @@ const App = {
 
         this.loadDashboard();
         this.loadTransactions();
-        this.announce(`Added ₹${transaction.amount}.`);
+        
+        const successMsg = `${transaction.type === 'income' ? 'Income' : 'Expense'} of ${this.formatMoney(transaction.amount)} in ${transaction.category} added successfully.`;
+        this.announce(successMsg);
     },
 
     getTransactions() {
@@ -201,11 +260,13 @@ const App = {
             document.getElementById('no-transactions-msg').classList.add('hidden');
             recent.forEach(t => {
                 const row = document.createElement('tr');
+                const formattedAmt = (t.type === 'income' ? '+' : '-') + this.formatMoney(t.amount);
+                row.setAttribute('aria-label', `${t.type} of ${formattedAmt} in ${t.category} on ${this.formatDate(t.date)}`);
                 row.innerHTML = `
                     <td>${this.formatDate(t.date)}</td>
                     <td>${t.category}</td>
                     <td class="text-right ${t.type === 'income' ? 'positive' : 'negative'}">
-                        ${t.type === 'income' ? '+' : '-'}${this.formatMoney(t.amount)}
+                        ${formattedAmt}
                     </td>
                 `;
                 tbody.appendChild(row);
@@ -235,14 +296,19 @@ const App = {
 
         transactions.forEach(t => {
             const row = document.createElement('tr');
+            const formattedAmt = (t.type === 'income' ? '+' : '-') + this.formatMoney(t.amount);
+            row.setAttribute('aria-label', `${t.type} of ${formattedAmt} in ${t.category} on ${this.formatDate(t.date)}`);
             row.innerHTML = `
                 <td>${this.formatDate(t.date)}</td>
                 <td>${t.category}</td>
                 <td class="text-right ${t.type === 'income' ? 'positive' : 'negative'}">
-                    ${t.type === 'income' ? '+' : '-'}${this.formatMoney(t.amount)}
+                    ${formattedAmt}
                 </td>
                 <td class="text-center">
-                    <button class="delete-btn" style="background:none; border:none; color:var(--danger); cursor:pointer;" data-id="${t.id}">✕</button>
+                    <button class="delete-btn" 
+                        style="background:none; border:none; color:var(--danger); cursor:pointer; padding: 4px;" 
+                        data-id="${t.id}"
+                        aria-label="Delete ${t.type} transaction of ${formattedAmt}">✕</button>
                 </td>
             `;
             tbody.appendChild(row);
@@ -250,12 +316,14 @@ const App = {
 
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const id = e.target.dataset.id;
-                if (confirm('Delete?')) {
+                const id = e.currentTarget.dataset.id;
+                const label = e.currentTarget.getAttribute('aria-label');
+                if (confirm(`Are you sure you want to ${label.toLowerCase()}?`)) {
                     const filtered = this.getTransactions().filter(t => t.id !== id);
                     localStorage.setItem('transactions', JSON.stringify(filtered));
                     this.loadTransactions();
                     this.loadDashboard();
+                    this.announce("Transaction deleted successfully.");
                 }
             });
         });

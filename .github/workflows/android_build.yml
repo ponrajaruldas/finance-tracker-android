@@ -35,8 +35,8 @@ jobs:
 
     - name: Bump Version (for Update)
       run: |
-        sed -i 's/versionCode 1/versionCode 4/' android/app/build.gradle
-        sed -i 's/versionName "1.0"/versionName "1.1.2"/' android/app/build.gradle
+        sed -i 's/versionCode 1/versionCode 113/' android/app/build.gradle
+        sed -i 's/versionName \"1.0\"/versionName \"1.1.13\"/' android/app/build.gradle
 
     - name: Build APK
       run: |
@@ -46,16 +46,17 @@ jobs:
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: latest
-        name: "Finance Tracker v1.1.2 (A11y Update)"
+        tag_name: "v1.1.13"
+        name: "Finance Tracker v1.1.13 (TalkBack & A11y Fix)"
         body: |
-          Update v1.1.2:
-          - Enhanced TalkBack feedback for transaction addition.
-          - Improved modal context and live regional announcements.
-          - Fixed focus issues when closing the transaction form.
-          - Bumped version for update compatibility.
+          Update v1.1.13:
+          - Core Fix: TalkBack accessibility for "Add Transaction" modal.
+          - Enhanced focus management (locks to modal during entry).
+          - Background content is now hidden (aria-hidden) while modal is active.
+          - Modal visibility logic fixed for cleaner transitions.
+          - Updated version for update compatibility.
         files: android/app/build/outputs/apk/debug/app-debug.apk
-        prerelease: true
+        prerelease: false
         make_latest: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
