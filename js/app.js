@@ -15,7 +15,7 @@ const App = {
         
         // Update version display
         const versionEl = document.getElementById('app-version');
-        if (versionEl) versionEl.textContent = 'v1.1.2 (Mobile & A11y Optimized)';
+        if (versionEl) versionEl.textContent = 'v1.1.13 (TalkBack & A11y Optimized)';
     },
 
     state: {
@@ -143,14 +143,32 @@ const App = {
         const openModal = () => {
             this.lastFocusedElement = document.activeElement;
             modal.classList.add('active');
+            
+            // Accessibility: Hide background from screen readers
+            const app = document.querySelector('.app-container');
+            if (app) app.setAttribute('aria-hidden', 'true');
+            modal.setAttribute('aria-hidden', 'false');
+
             setTimeout(() => {
-                document.getElementById('t-amount').focus();
+                const titleNode = document.getElementById('modal-title');
+                if (titleNode) {
+                    titleNode.setAttribute('tabindex', '-1');
+                    titleNode.focus();
+                } else {
+                    document.getElementById('t-amount').focus();
+                }
             }, 300);
             this.announce("Add transaction modal opened.");
         };
 
         this.closeModal = () => {
             modal.classList.remove('active');
+            
+            // Accessibility: Restore background
+            const app = document.querySelector('.app-container');
+            if (app) app.removeAttribute('aria-hidden');
+            modal.setAttribute('aria-hidden', 'true');
+
             form.reset();
             if (this.lastFocusedElement) {
                 this.lastFocusedElement.focus();
@@ -163,13 +181,13 @@ const App = {
 
         // Close modal on overlay click
         const overlay = modal.querySelector('.modal-overlay');
-        overlay.addEventListener('click', this.closeModal);
+        if (overlay) overlay.addEventListener('click', this.closeModal);
 
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             this.handleTransactionSubmit(new FormData(form));
             // Slight delay to allow announcement to register before focus shift
-            setTimeout(() => this.closeModal(), 500);
+            setTimeout(() => this.closeModal(), 1000);
         });
 
         // Focus Trap
