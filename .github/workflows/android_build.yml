@@ -35,8 +35,8 @@ jobs:
 
     - name: Bump Version (for Update)
       run: |
-        sed -i 's/versionCode 1/versionCode 114/' android/app/build.gradle
-        sed -i 's/versionName "1.0"/versionName "1.1.14"/' android/app/build.gradle
+        sed -i 's/versionCode 1/versionCode 115/' android/app/build.gradle
+        sed -i 's/versionName "1.0"/versionName "1.1.15"/' android/app/build.gradle
 
     - name: Build APK
       run: |
@@ -46,13 +46,13 @@ jobs:
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: "v1.1.14"
-        name: "Finance Tracker v1.1.14 (Accessibility Improvements)"
+        tag_name: "v1.1.15"
+        name: "Finance Tracker v1.1.15 (FAB & Modal Fix)"
         body: |
-          Update v1.1.14:
-          - Improved TalkBack support for Amount input (character-reading fix).
-          - Fixed radio button group (Income/Expense) for better screen reader focus.
-          - Updated version for update compatibility.
+          Update v1.1.15:
+          - Moved Add button to Floating Action Button (FAB) at bottom right.
+          - Fixed critical bug where the modal closed when double-tapping inputs/labels (z-index fix).
+          - Enhanced modal order and TalkingBack navigation sequence.
         files: android/app/build/outputs/apk/debug/app-debug.apk
         prerelease: false
         make_latest: true

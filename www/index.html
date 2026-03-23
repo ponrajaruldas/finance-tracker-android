@@ -18,9 +18,6 @@
         <!-- Top App Bar -->
         <header class="app-header">
             <h1 class="brand-name">FinTrack</h1>
-            <button class="btn-primary" id="btn-add-transaction" aria-label="Add new transaction">
-                + Add
-            </button>
         </header>
 
         <!-- Main Content Area -->
@@ -116,7 +113,7 @@
                             <span class="settings-label">App Version</span>
                             <span class="settings-desc">Update version and build info</span>
                         </div>
-                        <span class="version-badge" id="app-version">v1.1.14</span>
+                        <span class="version-badge" id="app-version">v1.1.15</span>
                     </div>
                 </div>
             </section>
@@ -137,11 +134,17 @@
                 <span class="label">Settings</span>
             </button>
         </nav>
+
+        <!-- Floating Add Button -->
+        <button class="btn-primary btn-fab" id="btn-add-transaction" aria-label="Add new transaction" title="Add Transaction">
+            <span>+</span>
+        </button>
     </div>
 
     <!-- Modal for Adding Transaction -->
     <div id="transaction-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"
         aria-describedby="modal-desc">
+        <div class="modal-overlay" tabindex="-1"></div>
         <div class="modal-content">
             <header class="modal-header">
                 <h2 id="modal-title">Add Transaction</h2>
@@ -196,7 +199,6 @@
                 </div>
             </form>
         </div>
-        <div class="modal-overlay" tabindex="-1"></div>
     </div>
 
     <!-- Live Region for Announcements -->
