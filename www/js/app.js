@@ -15,7 +15,7 @@ const App = {
         
         // Update version display
         const versionEl = document.getElementById('app-version');
-        if (versionEl) versionEl.textContent = 'v1.1.13 (TalkBack & A11y Optimized)';
+        if (versionEl) versionEl.textContent = 'v1.1.14 (TalkBack & A11y Optimized)';
     },
 
     state: {
@@ -341,8 +341,10 @@ const App = {
     announce(msg) {
         const el = document.getElementById('a11y-announcer');
         if (el) {
-            el.textContent = msg;
-            setTimeout(() => el.textContent = '', 3000);
+            el.textContent = '';
+            setTimeout(() => {
+                el.textContent = msg;
+            }, 50);
         }
     }
 };

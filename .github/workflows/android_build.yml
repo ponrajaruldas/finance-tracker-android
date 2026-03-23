@@ -35,8 +35,8 @@ jobs:
 
     - name: Bump Version (for Update)
       run: |
-        sed -i 's/versionCode 1/versionCode 113/' android/app/build.gradle
-        sed -i 's/versionName \"1.0\"/versionName \"1.1.13\"/' android/app/build.gradle
+        sed -i 's/versionCode 1/versionCode 114/' android/app/build.gradle
+        sed -i 's/versionName "1.0"/versionName "1.1.14"/' android/app/build.gradle
 
     - name: Build APK
       run: |
@@ -46,14 +46,12 @@ jobs:
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: "v1.1.13"
-        name: "Finance Tracker v1.1.13 (TalkBack & A11y Fix)"
+        tag_name: "v1.1.14"
+        name: "Finance Tracker v1.1.14 (Accessibility Improvements)"
         body: |
-          Update v1.1.13:
-          - Core Fix: TalkBack accessibility for "Add Transaction" modal.
-          - Enhanced focus management (locks to modal during entry).
-          - Background content is now hidden (aria-hidden) while modal is active.
-          - Modal visibility logic fixed for cleaner transitions.
+          Update v1.1.14:
+          - Improved TalkBack support for Amount input (character-reading fix).
+          - Fixed radio button group (Income/Expense) for better screen reader focus.
           - Updated version for update compatibility.
         files: android/app/build/outputs/apk/debug/app-debug.apk
         prerelease: false
