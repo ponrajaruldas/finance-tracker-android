@@ -97,6 +97,30 @@ main {
     border-radius: var(--radius-sm);
     font-weight: 600;
     cursor: pointer;
+    transition: background-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.btn-fab {
+    position: fixed;
+    bottom: 6rem;
+    right: 1.5rem;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    z-index: 150; /* Above bottom nav (100) */
+    background-color: var(--primary);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-fab:active {
+    transform: scale(0.95);
 }
 
 .btn-secondary {
@@ -349,6 +373,7 @@ input:checked + .slider:before {
     inset: 0;
     background: rgba(0,0,0,0.5);
     backdrop-filter: blur(4px);
+    z-index: 1;
 }
 
 .modal-content {
@@ -359,6 +384,7 @@ input:checked + .slider:before {
     padding: 1.5rem;
     transform: translateY(100%);
     transition: transform 0.3s ease;
+    z-index: 2; /* ABOVE OVERLAY */
 }
 
 .modal.active .modal-content {
@@ -382,7 +408,10 @@ input:checked + .slider:before {
     border-radius: var(--radius-sm);
 }
 
-.toggle-group input { display: none; }
+.toggle-group input:focus + .toggle-label {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+}
 .toggle-label {
     flex: 1; text-align: center; padding: 0.5rem; border-radius: 4px; color: var(--text-muted); font-weight: 600;
 }

@@ -113,7 +113,7 @@
                             <span class="settings-label">App Version</span>
                             <span class="settings-desc">Update version and build info</span>
                         </div>
-                        <span class="version-badge" id="app-version">v1.1.15</span>
+                        <span class="version-badge" id="app-version">v1.1.16</span>
                     </div>
                 </div>
             </section>
@@ -134,12 +134,12 @@
                 <span class="label">Settings</span>
             </button>
         </nav>
-
-        <!-- Floating Add Button -->
-        <button class="btn-primary btn-fab" id="btn-add-transaction" aria-label="Add new transaction" title="Add Transaction">
-            <span>+</span>
-        </button>
     </div>
+
+    <!-- Floating Add Button -->
+    <button class="btn-primary btn-fab" id="btn-add-transaction" aria-label="Add new transaction" title="Add Transaction">
+        <span>+</span>
+    </button>
 
     <!-- Modal for Adding Transaction -->
     <div id="transaction-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"
@@ -175,7 +175,7 @@
 
                 <div class="form-group">
                     <label for="t-category">Category</label>
-                    <select id="t-category" name="category" required>
+                    <select id="t-category" name="category" required aria-label="Select transaction category">
                         <option value="" disabled selected>Select Category</option>
                         <option value="Food">Food & Dining</option>
                         <option value="Transport">Transportation</option>
@@ -190,7 +190,7 @@
 
                 <div class="form-group">
                     <label for="t-desc">Description</label>
-                    <input type="text" id="t-desc" name="description" placeholder="e.g., Grocery shopping">
+                    <input type="text" id="t-desc" name="description" placeholder="e.g., Grocery shopping" aria-label="Transaction Description">
                 </div>
 
                 <div class="modal-actions">
